@@ -1,0 +1,35 @@
+.board {
+  width: 400px;
+  height: 400px;
+  display: grid;
+  grid-template-columns: repeat(8, 50px);
+  grid-template-rows: repeat(8, 50px);
+}
+
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0px;
+  padding: 0px;
+}
+
+.square.light {
+  background-color: #f1d9b5;
+}
+
+.square.dark {
+  background-color: #b58863;
+}
+
+.square.light.toggled {
+  border: 3px solid yellow;
+}
+
+.square.dark.toggled {
+  border: 3px solid yellow;
+}
+
+.value {
+  font-size: 50px
+}
