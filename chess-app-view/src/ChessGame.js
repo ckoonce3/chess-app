@@ -1,7 +1,7 @@
 // BOARD COLUMN NAMES
 const files = ['a','b','c','d','e','f','g', 'h'];
 // THE ORIENTATION OF PIECES from column a to column h, plus pawn at the end
-const pieces = ['R','N','B','Q','K','B','N','R','p']
+const pieces = ['R','N','B','Q','K','B','N','R','p'];
 
 // A class representing a game of chess
 export default class ChessGame {
@@ -13,12 +13,25 @@ export default class ChessGame {
         // Define the player's color and opponent's color
         this.player = color;
         this.opponent = color === 'w' ? 'b' : 'w';
+        // Other variables
+        this.turn = '';
+        // Create a game log
+        this.log = [];
+        // Reset the board
+        this.resetBoard();
+        
+    }
+
+    // Resets the game board
+    resetBoard() {
         // Defines if a square is toggled and which square is toggled
         this.toggled = '';
         // Defines whose turn it is, which is always white initially
         this.turn = 'w';
         // Defines the location of a pawn that can be captured by "en passant"
         this.enpassant = '';
+        // Defines the location of a pawn awaiting promotion
+        this.inpromotion = '';
         // Defines whether the game is over or not
         this.over = false;
         // Defines whether the game has a winner or not
@@ -39,6 +52,7 @@ export default class ChessGame {
                 });
             }
         }
+        this.update({event: 'reset', board: this.board, player: this.player});
     }
     
     // Toggle a specific square on the board
@@ -72,7 +86,6 @@ export default class ChessGame {
         // Start and end must exist on the board
         if (rs < 1 || rs > 8 || fs < 0 || fs > 8) return [false,false,false];
         if (re < 1 || re > 8 || fe < 1 || fe > 8) return [false,false,false];
-        console.log(start+" to "+end);
         // End square clicked must not be same color as start square
         if (this.getSquare(end).color === this.getSquare(start).color) return [false,false,false];
         // Variables measuring distance traveled
@@ -166,10 +179,53 @@ export default class ChessGame {
         return [true, potential_move[1],potential_move[2], board];
     }
 
+    // Converts a valid move on the current board to basic chess notation
+    basicNotation(start,end) {
+        let value = this.getSquare(start).value;
+        // Notation for pawn moves
+        if (value === 'p') {
+            if (start[0] === end[0]) {
+                return end;
+            } else {
+                return start[0]+'x'+end;
+            }
+        } 
+        // Notation for pieces where ambiguity cannot exist
+        if (value === 'Q' || value === 'K' || value === 'B') {
+            if (this.getSquare(end).color === '') {
+                return value+end;
+            } else {
+                return value+'x'+end;
+            }
+            // Notation for all other pieces (where ambiguity could exist)
+        } else {
+            let note = (this.getSquare(end).color !== '' ? 'x' : '') + end ;
+            let pieces = this.getSquaresByVC(value,this.turn);
+            if (pieces.length > 1) {
+                let other = pieces.map((sq) => sq.id).find((id) => id !== start);
+                console.log(other);
+                if (this.modelMove(other,end)[0]) {
+                    if (other[0] === start[0]) {
+                        return value+start[1]+note;
+                    } else {
+                        return value+start[0]+note;
+                    }
+                }
+            } 
+            return value+note;
+        }
+    }
+
     // Models a move and implements if the model is successful
     move(start,end) {
         let model = this.modelMove(start,end);
         if (! model[0]) return;
+
+        // Create a chess notation representation of the move
+        let note = '' 
+        if (! model[2]) {
+            note = this.basicNotation(start,end);
+        }
 
         // Update the board, whose turn it is, and other information if needed
         // Sends updates to the view
@@ -181,6 +237,16 @@ export default class ChessGame {
             value: this.getSquare(end).value,
             color: this.getSquare(end).color,
         });
+
+        
+        // If a pawn reached rank 8, update the view about promotion and return
+        if (this.getSquare(end).value === 'p') {
+            if ((end[1] === '1' && this.turn === 'b') || (end[1] === '8' && this.turn === 'w')) {
+                this.update({event: 'promote', id: end, color: this.turn});
+                this.inpromotion = end;
+                return;
+            }
+        }
         
         // Performs an additional update if an en-passant capture occured
         if (model[1]) {
@@ -193,10 +259,11 @@ export default class ChessGame {
             this.enpassant = '';
         }
 
-        // Updates the view if a castling was performed
+        // Updates the view and notation if castling was performed
         if (model[2]) {
             this.canCastleKing[this.turn] = false;
             this.canCastleQueen[this.turn] = false;
+            note = end[0] === 'g' ? 'O-O' : 'O-O-O'
             this.update({event: 'empty', id: (end[0] === 'g' ? 'h' : 'a')+end[1]});
             this.update({
                 event: 'setValue',
@@ -206,7 +273,7 @@ export default class ChessGame {
             });
         }
         
-        // Update castling information if the king or rook moved
+        // Update castling information and the notation if the king or rook moved
         if (this.canCastleKing[this.turn]) {
             if (start === (this.turn === 'w' ? 'e1' : 'e8') || start === (this.turn === 'w' ? 'h1' : 'h8')) {
                 this.canCastleKing[this.turn] = false;
@@ -220,15 +287,48 @@ export default class ChessGame {
         // Updates the turn
         this.turn = this.turn === 'w' ? 'b' : 'w';
 
-        // Test for mate
+        // Test for mate and check
+        note = this.testChecks(note);
+        // Log the notation on at the end
+        this.log.push(note);
+        console.log(this.log);
+    }
+
+    // Promotes a square at a given square
+    // No need to update the view since the view initiated the promotion
+    // However, with the new piece promoted, update turn, check for mate, and update notation
+    promote(value) {
+        let note = this.inpromotion+"="+value;
+        this.getSquare(this.inpromotion).value = value;
+        this.inpromotion = "";
+        this.turn = this.turn === 'w' ? 'b' : 'w';
+        this.testChecks(note)
+        this.log.push(note);
+        console.log(this.log);
+    }
+
+    deployMate() {
+        // If a mate has occured, then game is over
+        this.over = true;
+        // Retrieve the king position
+        let king_pos = this.board.find((sq) => sq.value === 'K' && sq.color === this.turn).id; 
+        // If king is in check, then set the winner of the game to be the person who just went
+        if (this.inCheck(this.board, king_pos)) this.winner = this.turn === 'w' ? 'b' : 'w';
+        // Update the view that the game is over
+        this.update({event: 'end', winner: this.winner});
+    }
+
+    testChecks(note) {
+        // Test for mate and check
         if (this.testMate()) {
-            // If a mate has occured, then game is over
-            this.over = true;
-            // If king is in check, then set the winner of the game to be the person who just went
-            if (this.kingInCheck(this.board)) this.winner = this.turn === 'w' ? 'b' : 'w';
-            // Update the view that the game is over
-            this.update({event: 'end', winner: this.winner});
+            this.deployMate(); 
+            if (this.winner !== '') note = note + "#";
+            // Test for non-mate check (for notation purposes)
+        } else {
+            let king_pos = this.getSquaresByVC('K',this.turn).pop().id;
+            if (this.inCheck(this.board, king_pos)) note = note + "+";
         }
+        return note;
     }
 
     // Test for checkmate/statemate

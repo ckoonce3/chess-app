@@ -17,18 +17,33 @@ const columns = ['a','b','c','d','e','f','g','h'];
 export default class ChessView {
     // Set up the view based on the game
     constructor(game) {
+        // Save the game
+        this.game = game;
         // Initialize the list of listeners
         this.listeners = []
         // Add this view's update method as an event listener of the game
-        game.addListener(this.update);
-        // Load all elements into the DOM initially using React
-        createNewChessView(game.getState());
+        game.addListener((info) => this.update(info));
+        // Create a new game
+        this.createNewGame();
+    }
 
+    resetGame(event) {
+        this.listeners.forEach((l) => l(event));
+        removeChessView();
+        this.createNewGame();
+    }
+
+    createNewGame() {
+        // Load all elements into the DOM initially using React
+        createNewChessView(this.game.getState());
         // Add click event listeners to all squares
         let squares = document.getElementsByClassName('square');
         for (let i=0; i<squares.length; i++) {
             squares[i].addEventListener('click', (e) => this.updateListeners(e));
         }
+
+        // Add a reset listener to the reset button
+        document.getElementById('reset').addEventListener('click', (e) => this.resetGame(e));
     }
 
     updateListeners(event) {
@@ -58,21 +73,53 @@ export default class ChessView {
         } else if (info.event === 'end') {
             console.log("Game Over");
             console.log(`${info.winner} Wins!`);
+        } else if (info.event === 'promote') {
+            createPromotionRibbon(info.color);
+            let promos = document.getElementsByClassName('promo')
+            for (let i=0; i<promos.length; i++) {
+                promos[i].addEventListener('mouseover', (e) => e.target.classList.add('toggled'));                
+                promos[i].addEventListener('click',(e) => {
+                    this.updateListeners(e);
+                    document.getElementById(info.id).firstChild.innerText = codes[e.target.id[1]][info.color];
+                    removePromotionRibbon();
+                });
+                
+            }
         }
     }
+}
 
+function removeChessView() {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+}
+
+function removePromotionRibbon() {
+    ReactDOM.unmountComponentAtNode(document.getElementById('promodiv'));
+}
+
+function createPromotionRibbon(color) {
+    ReactDOM.render(
+        <div>
+            <p>Select Promotion Piece</p>
+            <div className = "promos">
+                <div className = "promo" id="pQ">{codes['Q'][color]}</div>
+                <div className = "promo" id="pN">{codes['N'][color]}</div>
+                <div className = "promo" id="pB">{codes['B'][color]}</div>
+                <div className = "promo" id="pR">{codes['R'][color]}</div>
+            </div>
+        </div>,
+        document.getElementById('promodiv')
+    );
 }
 
 
 function createNewChessView(props) {
     ReactDOM.render(
-      <div id = "game">
       <ChessViewReact
         board = {props.board}
         player = {props.player}
         toggled = {props.toggled}
-      />
-      </div>,
+      />,
       document.getElementById('root')
     );
   }
@@ -80,12 +127,29 @@ function createNewChessView(props) {
 class ChessViewReact extends React.Component {
     render() {
       return (
-        <div className = "board">
-          <Board
-            board = {this.props.board}
-            player = {this.props.player}
-            toggled = {this.props.toggled}
-          />
+        <div id="game">
+            <div><h1>Play Chess</h1></div>
+            <div className="player">
+                <Player
+                    player = {this.props.player === 'w' ? 'b' : 'w'}             
+                />
+            </div>
+            <div id ="promodiv"></div>
+            <div className = "board">
+                <Board
+                    board = {this.props.board}
+                    player = {this.props.player}
+                    toggled = {this.props.toggled}
+                />
+            </div>
+            <div className="player">
+                <Player
+                    player = {this.props.player}             
+                />
+            </div>
+            <div className = "ribbon">
+                <button id="reset">Reset Board</button>
+            </div>
         </div>
       )
     }
@@ -122,4 +186,8 @@ function Square(props) {
             {props.value === "" ? "" : codes[props.value][props.color]} 
         </span>
     )
+}
+
+function Player(props) {
+    return <div></div>
 }
