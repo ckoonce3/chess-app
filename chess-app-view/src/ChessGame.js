@@ -19,7 +19,6 @@ export default class ChessGame {
         this.log = [];
         // Reset the board
         this.resetBoard();
-        
     }
 
     // Resets the game board
@@ -28,6 +27,7 @@ export default class ChessGame {
         this.toggled = '';
         // Defines whose turn it is, which is always white initially
         this.turn = 'w';
+        this.log = [];
         // Defines the location of a pawn that can be captured by "en passant"
         this.enpassant = '';
         // Defines the location of a pawn awaiting promotion

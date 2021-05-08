@@ -23,13 +23,44 @@ export default class ChessView {
         this.listeners = []
         // Add this view's update method as an event listener of the game
         game.addListener((info) => this.update(info));
+        // Go ahead and setup the login screen
+        this.createLoginScreen();
         // Create a new game
-        this.createNewGame();
+        //this.createNewGame();
+    }
+
+    createLoginScreen() {
+        createLoginReact();
+        document.getElementById('login').addEventListener('click',(e) => this.createLoginForm(e));
+        document.getElementById('signup').addEventListener('click',(e) => this.createSignupForm(e));
+    }
+    
+    createLoginForm() {
+        createLoginFormReact();
+        document.getElementById('login').addEventListener('click',(e) => {
+            e.preventDefault();
+            this.updateListeners(e);
+        });
+        document.getElementById('cancel').addEventListener('click',(e) => this.createLoginScreen(e));
+    }
+
+    createSignupForm() {
+        createSignupFormReact();
+        document.getElementById('signup').addEventListener('click',(e) => {
+            e.preventDefault();
+            this.updateListeners(e);
+        });
+        document.getElementById('cancel').addEventListener('click',(e) => this.createLoginScreen(e));
+    }
+
+    createGameOptions() {
+        createOptionsReact('load');
+        document.getElementById('new').addEventListener('click',(e) => this.createNewGame(e));
+        document.getElementById('load').addEventListener('click',(e) => this.updateListeners(e));
     }
 
     resetGame(event) {
         this.listeners.forEach((l) => l(event));
-        removeChessView();
         this.createNewGame();
     }
 
@@ -41,9 +72,11 @@ export default class ChessView {
         for (let i=0; i<squares.length; i++) {
             squares[i].addEventListener('click', (e) => this.updateListeners(e));
         }
-
-        // Add a reset listener to the reset button
+        // Add listeners to the buttons
         document.getElementById('reset').addEventListener('click', (e) => this.resetGame(e));
+        document.getElementById('save').addEventListener('click',(e) => this.updateListeners(e));
+        document.getElementById('newgame').addEventListener('click',(e) => this.createGameOptions(e));
+        document.getElementById('logout').addEventListener('click',(e) => this.updateListeners(e));
     }
 
     updateListeners(event) {
@@ -89,8 +122,80 @@ export default class ChessView {
     }
 }
 
-function removeChessView() {
+function createOptionsReact(type) {
     ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+    ReactDOM.render(
+        <div className="flex">
+            <h1>{type === 'load' ? 'Select an Option' : 'Select Color'}</h1>
+            <div>
+                <button id={type === 'load' ? 'load' : 'white'}>
+                    {type === 'load' ? 'Load Existing Game' : 'White'}
+                </button>
+                <button id={type === 'load' ? 'new' : 'black'}>
+                    {type === 'load' ? 'Create New Game' : 'Black'}
+                </button>
+            </div>
+        </div>,
+        document.getElementById('root')
+    );
+}
+
+
+function createLoginFormReact() {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+    ReactDOM.render(
+        <div className="flex">
+            <h1>Login to Chess10</h1>
+        <form className = "flex">
+            <label htmlFor="username">Username: </label>
+            <input type="text" name="username" id="username"></input><br />
+            <label htmlFor="password">Password:  </label>
+            <input type="password" name="password" id="password"></input><br />
+            <div>
+                <button type="submit" id="login">Submit</button>
+                <button id="cancel">Cancel</button>
+            </div>
+        </form>
+        </div>,
+        document.getElementById('root')
+    );
+}
+
+function createSignupFormReact() {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'))
+    ReactDOM.render(
+        <div className="flex">
+            <h1>Login to Chess10</h1>
+        <form className = "flex">
+            <label htmlFor="username">Username: </label>
+            <input type="text" name="username" id="username"></input><br />
+            <label htmlFor="password">Password:  </label>
+            <input type="password" name="password" id="password"></input><br />
+            <label htmlFor="confirm">Confirm Password:  </label>
+            <input type="password" name="confirm" id="confirm"></input><br />
+            <div>
+                <button type="submit" id="signup">Submit</button>
+                <button id="cancel">Cancel</button>
+            </div>
+        </form>
+        </div>,
+        document.getElementById('root')
+    );
+}
+
+
+function createLoginReact() {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'))
+    ReactDOM.render(
+        <div className="flex">
+            <h1>Welcome to Chess10</h1>
+            <div>
+                <button id="login">Login</button>
+                <button id="signup">Signup</button>
+            </div>
+        </div>,
+        document.getElementById('root')
+    );
 }
 
 function removePromotionRibbon() {
@@ -112,8 +217,8 @@ function createPromotionRibbon(color) {
     );
 }
 
-
 function createNewChessView(props) {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
     ReactDOM.render(
       <ChessViewReact
         board = {props.board}
@@ -149,6 +254,9 @@ class ChessViewReact extends React.Component {
             </div>
             <div className = "ribbon">
                 <button id="reset">Reset Board</button>
+                <button id="save">Save Game</button>
+                <button id="newgame">New Game</button>
+                <button id="logout">Logout</button>
             </div>
         </div>
       )

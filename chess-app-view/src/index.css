@@ -5,6 +5,13 @@
   flex-direction: column;
 }
 
+.flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
 p {
   margin: 5px;
   padding: 0px;
@@ -17,7 +24,7 @@ p {
   align-items: center;
 }
 
-.ribbon button {
+button {
   margin: 4px;
   padding: 5px;
 }
