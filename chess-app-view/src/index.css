@@ -5,6 +5,20 @@
   flex-direction: column;
 }
 
+table {
+  table-layout: fixed;
+}
+
+td {
+  text-align: center;
+}
+
+img {
+  margin: 10px;
+  max-width: 250px;
+  max-height: 250px;
+}
+
 .flex {
   display: flex;
   justify-content: center;

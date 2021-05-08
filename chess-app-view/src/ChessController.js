@@ -11,20 +11,13 @@ export default class ChessController {
     configure() {
         // Add update method as a listener of the view
         this.view.addListener((e) => this.update(e));
-        // Check to see if the user is logged in or not
-        fn1();
-        //fn2();
-        //fn3();
-           //fn4();
-        //fn5();
-        //fn6()
-        //fn7();
     }
 
     async update(event) {
         if(event.type === 'click') {
             // If clicking on a square or a piece value, instruct the model to toggle a square
             if (/square*|value*/.test(event.target.className)) {
+                console.log(event.target.closest('.square').id);
                 this.game.toggleSquare(event.target.closest('.square').id);
             } else if (event.target.id === 'reset') {
                 this.game.resetBoard();
@@ -68,16 +61,34 @@ export default class ChessController {
                     this.game.log.toString()
                 )) alert('Game saved');
             } else if (event.target.id === 'load') {
-                executeLoadGame(this.view, this.username);
+                let games = await loadGames(this.username);
+                this.view.loadGames(games);
+            } else if (event.target.id === 'cat') {
+                const cat = await createCat();
+                this.view.addImage(cat);
+            } else if (event.target.id === 'dog') {
+                const dog = await createDog();
+                this.view.addImage(dog);
             }
         }
     }
 
 }
 
-export async function executeLoadGame(view, username) {
-    let games = await loadGames(username);
-    console.log(games);
+export async function createDog() {
+    const dog = await axios({
+        method: 'get',
+        url: 'https://dog.ceo/api/breeds/image/random'    
+    });
+    return dog.data['message'];
+}
+
+export async function createCat() {
+    const cat = await axios({
+        method: 'get',
+        url: 'https://aws.random.cat/meow',
+    });
+    return cat.data['file'];
 }
 
 export async function fn1() {

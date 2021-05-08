@@ -26,7 +26,6 @@ export default class ChessView {
         // Go ahead and setup the login screen
         this.createLoginScreen();
         // Create a new game
-        //this.createNewGame();
     }
 
     createLoginScreen() {
@@ -55,16 +54,26 @@ export default class ChessView {
 
     createGameOptions() {
         createOptionsReact('load');
-        document.getElementById('new').addEventListener('click',(e) => this.createNewGame(e));
+        document.getElementById('new').addEventListener('click',(e) => this.createColorSelect(e));
         document.getElementById('load').addEventListener('click',(e) => this.updateListeners(e));
     }
 
     resetGame(event) {
         this.listeners.forEach((l) => l(event));
-        this.createNewGame();
+        this.createNewGame(this.game.player);
     }
 
-    createNewGame() {
+    loadGames(games) {
+        loadGamesReact(games);
+        document.getElementById('back').addEventListener('click',(e) => this.createGameOptions(e));
+        document.getElementById('logout').addEventListener('click',(e) => this.updateListeners(e));
+    }
+
+    createNewGame(color) {
+        // Set the player color of the game
+        this.game.setPlayer(color);
+        // Reset the game board
+        this.game.resetBoard();
         // Load all elements into the DOM initially using React
         createNewChessView(this.game.getState());
         // Add click event listeners to all squares
@@ -77,6 +86,19 @@ export default class ChessView {
         document.getElementById('save').addEventListener('click',(e) => this.updateListeners(e));
         document.getElementById('newgame').addEventListener('click',(e) => this.createGameOptions(e));
         document.getElementById('logout').addEventListener('click',(e) => this.updateListeners(e));
+        document.getElementById('cat').addEventListener('click',(e) => this.updateListeners(e));
+        document.getElementById('dog').addEventListener('click',(e) => this.updateListeners(e));
+    }
+
+    createColorSelect() {
+        createOptionsReact('color');
+        document.getElementById('white').addEventListener('click',(e) => this.createNewGame('w'));
+        document.getElementById('black').addEventListener('click',(e) => this.createNewGame('b'));
+    }
+
+    addImage(url) {
+        console.log(url);
+        document.getElementById('randimg').src = url;
     }
 
     updateListeners(event) {
@@ -122,6 +144,39 @@ export default class ChessView {
     }
 }
 
+function loadGamesReact(games) {
+    ReactDOM.unmountComponentAtNode(document.getElementById('root'));
+    ReactDOM.render(
+       <div className="flex">
+           <table>
+                <thead>
+               <tr key="headers">
+                   <th key="idh" width="75px">Game ID</th>
+                   <th key="colorh" width="50px">Color</th>
+                   <th key="dateh" width="100px">Date</th>
+                   <th key="logh" width="200px">Game Log</th>
+                </tr>
+                </thead>
+                <tbody>
+               {games.map((game) =>
+                   <tr key={game['id']}>
+                       <td key={game['id']+"id"}>{game['id']}</td>
+                       <td key={game['id']+"color"}>{game['color']}</td>
+                       <td key={game['id']+"date"}>{game['date']}</td>
+                       <td key={game['id']+"log"}>{game['log']}</td>
+                    </tr>
+               )}
+               </tbody>
+           </table>
+           <div>
+            <button id='back'>Go Back</button>
+            <button id='logout'>Logout</button>
+           </div>
+       </div>,
+       document.getElementById('root')
+    );
+}
+
 function createOptionsReact(type) {
     ReactDOM.unmountComponentAtNode(document.getElementById('root'));
     ReactDOM.render(
@@ -129,7 +184,7 @@ function createOptionsReact(type) {
             <h1>{type === 'load' ? 'Select an Option' : 'Select Color'}</h1>
             <div>
                 <button id={type === 'load' ? 'load' : 'white'}>
-                    {type === 'load' ? 'Load Existing Game' : 'White'}
+                    {type === 'load' ? 'View Existing Games' : 'White'}
                 </button>
                 <button id={type === 'load' ? 'new' : 'black'}>
                     {type === 'load' ? 'Create New Game' : 'Black'}
@@ -258,6 +313,13 @@ class ChessViewReact extends React.Component {
                 <button id="newgame">New Game</button>
                 <button id="logout">Logout</button>
             </div>
+            <div>
+                <button id="cat">I'm a Cat Person</button>
+                <button id="dog">I'm a Dog Person</button>
+            </div>
+            <div>
+                <img id='randimg' src ='' alt=''></img>
+            </div>
         </div>
       )
     }
@@ -268,9 +330,7 @@ function Board(props) {
         let r = square.id[1];
         let c = columns.findIndex((c) => c === square.id[0]);
         let color = (
-            r % 2 ^ c % 2 ?
-            props.player === 'w' ? 'dark' : 'light' :
-            props.player === 'w' ? 'light' : 'dark'
+            r % 2 ^ c % 2 ? 'dark' : 'light'
         );
         let sq_class = `square ${color} ${props.toggled === square.id ? 'toggled' : ''}`
         return (

@@ -1,24 +1,28 @@
 // BOARD COLUMN NAMES
 const files = ['a','b','c','d','e','f','g', 'h'];
 // THE ORIENTATION OF PIECES from column a to column h, plus pawn at the end
-const pieces = ['R','N','B','Q','K','B','N','R','p'];
+const pieces = {
+    w: ['R','N','B','Q','K','B','N','R','p'],
+    b: ['R','N','B','K','Q','B','N','R','p'],
+}
 
 // A class representing a game of chess
 export default class ChessGame {
     // Create a new game, given the initial parameter of what color one is choosing
-    constructor(mode, color) {
+    constructor() {
         this.listeners = [];
-        // Define the game mode
-        this.mode = mode;
         // Define the player's color and opponent's color
-        this.player = color;
-        this.opponent = color === 'w' ? 'b' : 'w';
+        this.player = '';
+        this.opponent = '';
         // Other variables
         this.turn = '';
         // Create a game log
         this.log = [];
-        // Reset the board
-        this.resetBoard();
+    }
+
+    setPlayer(color) {
+        this.player = color;
+        this.opponent = color === 'w' ? 'b' : 'w'; 
     }
 
     // Resets the game board
@@ -46,9 +50,9 @@ export default class ChessGame {
             for (let c=0; c<8; c++) {
                 // If player is white, then start with a8 and black pieces, otherwise start with a1 and white pieces
                 this.board.push({
-                    id: `${files[c]}${this.player==='w' ? (8-r) : (r)}`,
+                    id: `${this.player === 'w' ? files[c] : files[7-c]}${this.player==='w' ? (8-r) : (r+1)}`,
                     color: r<2 ? this.opponent : r>5 ? this.player : "",
-                    value: r===0 || r===7 ? pieces[c] : r===1 || r===6 ? 'p' : '',
+                    value: r===0 || r===7 ? pieces[this.player][c] : r===1 || r===6 ? 'p' : '',
                 });
             }
         }
