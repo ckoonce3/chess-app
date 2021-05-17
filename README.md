@@ -1,3 +1,4 @@
-# Chess App Frontend
+# Chess App Front End
 
-This frontend was build using React.  The React app code can be found in the chess-app-view folder.
+This front end was build using React.  The React app code can be found in the chess-app-view folder.
+The backend is not deployed yet, but the front end is currently deployed at https://main.d2vnyrz11op24h.amplifyapp.com/
